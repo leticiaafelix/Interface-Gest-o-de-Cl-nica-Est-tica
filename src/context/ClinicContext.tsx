@@ -800,7 +800,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         origin: isAlreadyPaid ? 'online' : 'balcao',
         status: 'em_atendimento',
         paymentStatus: 'pago',
-        cardLast4: payment?.cardLast4 ?? '4242',
+        cardLast4: payment?.cardLast4,
         creditUsedAmount: payment?.useCreditAmount,
         createdAt: simulatedDate,
         arrivedAt: simulatedTime,

@@ -1,13 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, CreditCard, Sparkles } from 'lucide-react';
+import { AlertCircle, CheckCircle2, CreditCard, Sparkles, XCircle } from 'lucide-react';
 import { Modal } from './Modal';
-import {
-  formatCurrencyBRL,
-  maskCardExpiry,
-  maskCardNumber,
-  onlyDigits,
-  validateCreditCard,
-} from '../utils/formatters';
+import { formatCurrencyBRL, onlyDigits } from '../utils/formatters';
 
 interface PaymentModalProps {
   open: boolean;
@@ -16,7 +10,8 @@ interface PaymentModalProps {
   serviceName: string;
   amount: number;
   availableCredit: number;
-  onConfirm: (result: { cardLast4: string; useCreditAmount: number }) => void;
+  /** cardLast4 é opcional: só os 4 últimos dígitos impressos no comprovante da maquininha. */
+  onConfirm: (result: { cardLast4?: string; useCreditAmount: number }) => void;
 }
 
 export const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -28,23 +23,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   availableCredit,
   onConfirm,
 }) => {
-  const [cardNumber, setCardNumber] = useState('');
-  const [holder, setHolder] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvv, setCvv] = useState('');
+  const [last4, setLast4] = useState('');
   const [useCredit, setUseCredit] = useState(false);
+  const [declined, setDeclined] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
-      setCardNumber('');
-      setHolder(clientName);
-      setExpiry('');
-      setCvv('');
+      setLast4('');
       setUseCredit(availableCredit > 0);
+      setDeclined(false);
       setError(null);
     }
-  }, [open, clientName, availableCredit]);
+  }, [open, availableCredit]);
 
   const creditToApply = useCredit ? Math.min(availableCredit, amount) : 0;
   const remainingAmount = Math.max(0, amount - creditToApply);
@@ -54,23 +45,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setError(null);
 
     if (remainingAmount === 0) {
-      onConfirm({ cardLast4: 'CRÉD', useCreditAmount: creditToApply });
+      onConfirm({ useCreditAmount: creditToApply });
       return;
     }
 
-    const res = validateCreditCard({
-      number: cardNumber,
-      holder,
-      expiry,
-      cvv,
-    });
-
-    if (!res.valid || !res.last4) {
-      setError(res.error || 'Dados do cartão inválidos.');
+    if (last4 && last4.length !== 4) {
+      setError('O final do cartão tem 4 dígitos. Deixe em branco se não quiser informar.');
       return;
     }
 
-    onConfirm({ cardLast4: res.last4, useCreditAmount: creditToApply });
+    onConfirm({ cardLast4: last4 || undefined, useCreditAmount: creditToApply });
   };
 
   return (
@@ -111,7 +95,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
           <div className="flex items-center justify-between pt-2 border-t border-[#EADAD3]">
             <span className="text-sm font-semibold text-[#2E2A2B]">
-              Total a cobrar no cartão
+              Cobrar na maquininha
             </span>
             <span className="font-display text-xl font-bold text-[#B76E79] tabular-nums">
               {formatCurrencyBRL(remainingAmount)}
@@ -121,97 +105,63 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {remainingAmount > 0 ? (
           <>
-            <p className="text-xs text-[#6E6567]">
-              Pagamento exclusivamente no cartão de crédito. Somente os 4 últimos
-              dígitos são armazenados. (Dica de teste: cartões terminados em{' '}
-              <strong className="font-semibold text-[#2E2A2B]">0000</strong> são
-              recusados.)
-            </p>
+            <ol className="space-y-2 text-sm text-[#2E2A2B]">
+              <li className="flex gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-[#F3E3DC] text-[#9A5560] text-xs font-bold flex items-center justify-center shrink-0">1</span>
+                <span>
+                  Digite <strong className="tabular-nums">{formatCurrencyBRL(remainingAmount)}</strong> na maquininha, opção <strong>Crédito</strong>.
+                </span>
+              </li>
+              <li className="flex gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-[#F3E3DC] text-[#9A5560] text-xs font-bold flex items-center justify-center shrink-0">2</span>
+                <span>A cliente insere ou aproxima o cartão e digita a senha.</span>
+              </li>
+              <li className="flex gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-[#F3E3DC] text-[#9A5560] text-xs font-bold flex items-center justify-center shrink-0">3</span>
+                <span>Quando a maquininha mostrar <strong>Aprovado</strong>, confirme aqui.</span>
+              </li>
+            </ol>
 
             <div>
               <label
-                htmlFor="rf-card-number"
+                htmlFor="rf-card-last4"
                 className="block text-sm font-medium text-[#2E2A2B] mb-1"
               >
-                Número do cartão de crédito
+                Final do cartão no comprovante{' '}
+                <span className="font-normal text-[#6E6567]">(opcional)</span>
               </label>
-              <div className="relative">
+              <div className="relative max-w-[180px]">
                 <CreditCard
                   className="w-4 h-4 text-[#6E6567] absolute left-3.5 top-1/2 -translate-y-1/2"
                   aria-hidden="true"
                 />
                 <input
-                  id="rf-card-number"
+                  id="rf-card-last4"
                   type="text"
                   inputMode="numeric"
-                  placeholder="0000 0000 0000 4242"
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(maskCardNumber(e.target.value))}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#D9C3B9] text-sm tabular-nums bg-white"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="rf-card-holder"
-                className="block text-sm font-medium text-[#2E2A2B] mb-1"
-              >
-                Nome impresso no cartão
-              </label>
-              <input
-                id="rf-card-holder"
-                type="text"
-                placeholder="Nome completo"
-                value={holder}
-                onChange={(e) => setHolder(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D9C3B9] text-sm bg-white"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label
-                  htmlFor="rf-card-expiry"
-                  className="block text-sm font-medium text-[#2E2A2B] mb-1"
-                >
-                  Validade (MM/AA)
-                </label>
-                <input
-                  id="rf-card-expiry"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="12/29"
-                  value={expiry}
-                  onChange={(e) => setExpiry(maskCardExpiry(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#D9C3B9] text-sm tabular-nums bg-white"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="rf-card-cvv"
-                  className="block text-sm font-medium text-[#2E2A2B] mb-1"
-                >
-                  CVV
-                </label>
-                <input
-                  id="rf-card-cvv"
-                  type="password"
-                  inputMode="numeric"
+                  placeholder="•••• 1234"
                   maxLength={4}
-                  placeholder="123"
-                  value={cvv}
-                  onChange={(e) =>
-                    setCvv(onlyDigits(e.target.value).slice(0, 4))
-                  }
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#D9C3B9] text-sm tabular-nums bg-white"
-                  required
+                  value={last4}
+                  onChange={(e) => setLast4(onlyDigits(e.target.value).slice(0, 4))}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#D9C3B9] text-sm tabular-nums bg-white"
                 />
               </div>
+              <p className="text-xs text-[#6E6567] mt-1">
+                O sistema não pede nem guarda o número do cartão: o valor cai na conta da clínica pela operadora da maquininha.
+              </p>
             </div>
+
+            {declined && (
+              <div
+                role="alert"
+                className="flex items-start gap-2.5 p-3 rounded-xl bg-[#FDECEC] border border-[#F5C2C2] text-xs text-[#9B2C2C]"
+              >
+                <XCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                <span>
+                  Pagamento não registrado. Peça outro cartão de crédito à cliente e passe de novo na maquininha.
+                </span>
+              </div>
+            )}
           </>
         ) : (
           <div className="flex items-center gap-2.5 p-3 rounded-xl bg-[#E8F4EC] border border-[#BCE0C8] text-sm text-[#1F6138]">
@@ -230,7 +180,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-3 pt-2">
+        <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2">
           <button
             type="button"
             onClick={onClose}
@@ -238,13 +188,21 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           >
             Cancelar
           </button>
+          {remainingAmount > 0 && (
+            <button
+              type="button"
+              onClick={() => setDeclined(true)}
+              className="px-4 py-2.5 rounded-full text-sm font-medium border border-[#F5C2C2] text-[#9B2C2C] bg-white hover:bg-[#FDECEC]"
+            >
+              Recusado
+            </button>
+          )}
           <button
             type="submit"
-            className="rf-btn-primary px-6 py-2.5 text-sm font-medium"
+            className="rf-btn-primary px-6 py-2.5 text-sm font-medium inline-flex items-center gap-2"
           >
-            {remainingAmount === 0
-              ? 'Confirmar com crédito'
-              : `Cobrar ${formatCurrencyBRL(remainingAmount)}`}
+            <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+            {remainingAmount === 0 ? 'Confirmar com crédito' : 'Pagamento aprovado'}
           </button>
         </div>
       </form>
