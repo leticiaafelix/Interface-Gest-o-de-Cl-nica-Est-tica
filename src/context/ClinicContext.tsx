@@ -32,10 +32,10 @@ import {
   minutesUntilNoShowAllowed,
 } from '../utils/scheduling';
 
-const STORAGE_STATE_KEY = 'rf_clinic_state_v1';
-const STORAGE_AUTH_KEY = 'rf_auth_user_v1';
-const STORAGE_SIM_TIME_KEY = 'rf_sim_time_v1';
-const STORAGE_SIM_DATE_KEY = 'rf_sim_date_v1';
+const STORAGE_STATE_KEY = 'rf_clinic_state_v2';
+const STORAGE_AUTH_KEY = 'rf_auth_user_v2';
+const STORAGE_SIM_TIME_KEY = 'rf_sim_time_v2';
+const STORAGE_SIM_DATE_KEY = 'rf_sim_date_v2';
 
 export interface ToastMessage {
   id: string;

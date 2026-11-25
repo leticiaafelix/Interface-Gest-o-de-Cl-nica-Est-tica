@@ -336,13 +336,26 @@ export const WaitlistPage: React.FC = () => {
                         {formatCurrencyBRL(entry.price)}
                       </td>
                       <td className="py-3.5 px-4 text-right whitespace-nowrap space-x-2">
-                        {compatSlot && (
+                        {compatSlot ? (
                           <button
                             type="button"
                             onClick={() => handleFitNow(entry, compatSlot)}
                             className="rf-btn-primary px-3.5 py-1.5 text-xs font-medium"
                           >
-                            Encaixar ({compatSlot.startTime})
+                            Encaixar {compatSlot.startTime} ·{' '}
+                            {state.professionals
+                              .find((p) => p.id === compatSlot.professionalId)
+                              ?.name.split(' ')[0]}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled
+                            title="Sem horário compatível no momento: nenhum profissional dessa especialidade tem tempo livre suficiente."
+                            aria-label={`Sem horário compatível no momento para ${entry.clientName}`}
+                            className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-[#F1ECEA] text-[#9C9193] cursor-not-allowed"
+                          >
+                            Sem horário compatível
                           </button>
                         )}
                         <button

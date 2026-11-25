@@ -10,6 +10,7 @@ import {
   WEEKDAY_SHORT_LABELS,
 } from '../utils/formatters';
 import { Modal } from '../components/Modal';
+import { BrazilianDateInput, BrazilianTimeInput } from '../components/DateTimeInputs';
 
 export const PackagesPage: React.FC = () => {
   const { state, simulatedDate, savePackage, deletePackage } = useClinic();
@@ -287,11 +288,11 @@ export const PackagesPage: React.FC = () => {
               <label htmlFor="pkg-from" className="block text-xs font-medium mb-1">
                 Início validade
               </label>
-              <input
+              <BrazilianDateInput
                 id="pkg-from"
-                type="date"
                 value={validFrom}
-                onChange={(e) => setValidFrom(e.target.value)}
+                fullWidth
+                onChange={(iso) => setValidFrom(iso)}
                 className="w-full px-2.5 py-2 rounded-xl border border-[#D9C3B9] text-xs bg-white tabular-nums"
                 required
               />
@@ -300,11 +301,11 @@ export const PackagesPage: React.FC = () => {
               <label htmlFor="pkg-until" className="block text-xs font-medium mb-1">
                 Fim validade
               </label>
-              <input
+              <BrazilianDateInput
                 id="pkg-until"
-                type="date"
                 value={validUntil}
-                onChange={(e) => setValidUntil(e.target.value)}
+                fullWidth
+                onChange={(iso) => setValidUntil(iso)}
                 className="w-full px-2.5 py-2 rounded-xl border border-[#D9C3B9] text-xs bg-white tabular-nums"
                 required
               />

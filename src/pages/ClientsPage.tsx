@@ -19,6 +19,7 @@ import {
   maskPhone,
   onlyDigits,
   validateCPF,
+  formatMaskedCPF,
 } from '../utils/formatters';
 import { getClientAvailableCredit } from '../utils/scheduling';
 import { AppointmentStatusLabel } from '../components/StatusBadge';
@@ -224,7 +225,7 @@ export const ClientsPage: React.FC = () => {
                           )}
                         </div>
                         <p className="text-xs text-[#6E6567] tabular-nums">
-                          {cli.cpf} · {cli.phone}
+                          {formatMaskedCPF(cli.cpf)} · {cli.phone}
                         </p>
                       </div>
                       {credit > 0 && (
@@ -386,7 +387,7 @@ export const ClientsPage: React.FC = () => {
                       Nenhum atendimento registrado para esta cliente ainda.
                     </p>
                   ) : (
-                    <div className="overflow-x-auto border border-[#EADAD3] rounded-2xl">
+                    <div className="overflow-auto max-h-[560px] border border-[#EADAD3] rounded-2xl">
                       <table className="w-full text-left border-collapse text-xs">
                         <thead>
                           <tr className="bg-[#FFFAF7] border-b border-[#EADAD3] text-[#6E6567]">
@@ -398,14 +399,15 @@ export const ClientsPage: React.FC = () => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#F1E6E0]">
-                          {clientHistory.slice(0, 12).map((h) => {
+                          {clientHistory.map((h) => {
                             const prof = state.professionals.find(
                               (p) => p.id === h.professionalId
                             );
                             return (
                               <tr key={h.id}>
                                 <td className="py-2.5 px-3 tabular-nums whitespace-nowrap">
-                                  {formatDateBR(h.date)} · {h.startTime}
+                                  {formatDateBR(h.date)}
+                                  <span className="block text-[#6E6567]">{h.startTime}</span>
                                 </td>
                                 <td className="py-2.5 px-3 font-medium">
                                   {h.serviceName}

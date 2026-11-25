@@ -41,6 +41,7 @@ import {
   getAvailableSlots,
   getClientAvailableCredit,
   getClinicOccupancySummary,
+  formatSpecialtyOccupancySummary,
   isLateArrival,
 } from '../utils/scheduling';
 import { PaymentModal } from '../components/PaymentModal';
@@ -362,13 +363,16 @@ export const DashboardPage: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-semibold text-[#2E2A2B]">
-            Visão Geral da Clínica
+            {isManager ? 'Visão Geral da Clínica' : 'Recepção'}
           </h1>
           <p className="text-sm text-[#6E6567] mt-0.5">
-            {periodLabel} · Atualizado em tempo real conforme os atendimentos
+            {isManager
+              ? `${periodLabel} · Atualizado em tempo real conforme os atendimentos`
+              : `Hoje, ${formatDateBR(simulatedDate)} · Chegadas, fila de espera e equipe em tempo real`}
           </p>
         </div>
 
+        {isManager && (
         <div
           className="inline-flex items-center p-1 rounded-full bg-[#F3E3DC]/80 border border-[#EADAD3]"
           role="group"
@@ -397,6 +401,7 @@ export const DashboardPage: React.FC = () => {
             );
           })}
         </div>
+        )}
       </div>
 
       {(() => {
@@ -504,6 +509,202 @@ export const DashboardPage: React.FC = () => {
           </div>
         );
 
+        const nextAppointmentsSection = (
+          <section className="rf-card p-5" aria-label="Próximos atendimentos">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="font-display text-lg font-semibold text-[#2E2A2B]">
+                  Próximos atendimentos
+                </h2>
+                <p className="text-xs text-[#6E6567]">
+                  Próximas 5 clientes agendadas hoje
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/agenda')}
+                className="text-xs font-medium text-[#B76E79] hover:underline flex items-center gap-1"
+              >
+                <span>Ver agenda</span>
+                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              </button>
+            </div>
+
+            {nextFiveAppointments.length === 0 ? (
+              <p className="text-sm text-[#6E6567] py-6 text-center">
+                Nenhum próximo agendamento pendente hoje.
+              </p>
+            ) : (
+              <ul className="divide-y divide-[#F1E6E0]">
+                {nextFiveAppointments.map((appt) => {
+                  const prof = state.professionals.find(
+                    (p) => p.id === appt.professionalId
+                  );
+                  const hairDetail =
+                    appt.hairFormat && appt.hairLength
+                      ? ` · ${HAIR_FORMAT_LABELS[appt.hairFormat]} ${HAIR_LENGTH_LABELS[appt.hairLength]}`
+                      : '';
+                  const isOverdue = isLateArrival(appt, simulatedMinutes);
+                  return (
+                    <li
+                      key={appt.id}
+                      className="py-3.5 first:pt-0 last:pb-0 flex flex-col gap-2"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-xs font-bold text-[#9A5560] tabular-nums">
+                            {appt.startTime}
+                          </span>
+                          <OriginBadge origin={appt.origin} />
+                          {isOverdue && (
+                            <AppointmentStatusLabel
+                              status={appt.status}
+                              isLate={true}
+                            />
+                          )}
+                        </div>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[#2E2A2B] truncate">
+                          {appt.clientName}
+                        </p>
+                        <p className="text-xs text-[#6E6567] truncate">
+                          {appt.serviceName}
+                          {hairDetail} · {prof?.name}
+                        </p>
+                      </div>
+                      <div className="flex justify-end">
+                        {isOverdue ? (
+                          <button
+                            type="button"
+                            onClick={() => handleCheckInClick(appt)}
+                            className="px-3 py-1.5 rounded-full text-xs font-medium bg-[#FFF4E5] text-[#8C5214] border border-[#F0D0A8] hover:bg-[#FDE6C4] transition-colors inline-flex items-center gap-1.5"
+                          >
+                            <Hourglass className="w-3 h-3 shrink-0" aria-hidden="true" />
+                            <span>Chegou atrasada – enviar à fila</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleCheckInClick(appt)}
+                            className="rf-btn-primary px-3 py-1.5 text-xs font-medium"
+                          >
+                            Cliente chegou
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+        );
+
+        const waitlistSection = (
+          <section className="rf-card p-5" aria-label="Fila de espera">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="font-display text-lg font-semibold text-[#2E2A2B]">
+                  Fila de espera
+                </h2>
+                <p className="text-xs text-[#6E6567]">
+                  Por ordem de chegada ({waitingQueue.length})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/fila')}
+                className="text-xs font-medium text-[#B76E79] hover:underline flex items-center gap-1"
+              >
+                <span>Gerenciar</span>
+                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              </button>
+            </div>
+
+            {waitingQueue.length === 0 ? (
+              <p className="text-sm text-[#6E6567] py-6 text-center">
+                Fila de espera vazia no momento.
+              </p>
+            ) : (
+              <ul className="divide-y divide-[#F1E6E0]">
+                {waitingQueue.map((entry, idx) => (
+                  <li key={entry.id} className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs text-[#6E6567] tabular-nums">
+                        #{idx + 1} · Entrada {entry.enteredAt} ·{' '}
+                        {entry.type === 'atrasada_paga'
+                          ? 'Atrasada – já pagou'
+                          : 'Sem reserva'}
+                      </p>
+                      <p className="text-sm font-semibold text-[#2E2A2B] truncate mt-0.5">
+                        {entry.clientName}
+                      </p>
+                      <p className="text-xs text-[#6E6567] truncate">
+                        {entry.serviceName} ({entry.durationMinutes} min)
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFitModalEntry(entry);
+                        setSelectedFitSlot(null);
+                      }}
+                      className="rf-btn-secondary px-3.5 py-1.5 text-xs font-semibold shrink-0 whitespace-nowrap"
+                    >
+                      Encaixar
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        );
+
+        const teamNowSection = (
+          <section className="rf-card p-5" aria-label="Profissionais agora">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="font-display text-lg font-semibold text-[#2E2A2B]">
+                  Profissionais agora
+                </h2>
+                <p className="text-xs text-[#6E6567] tabular-nums">
+                  {formatSpecialtyOccupancySummary(clinicOccupancyAll.busyCount, clinicOccupancyAll.idleCount)} · {simulatedTime}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/profissionais-agora')}
+                className="text-xs font-medium text-[#B76E79] hover:underline flex items-center gap-1"
+              >
+                <span>Ver equipe</span>
+                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              </button>
+            </div>
+            <ul className="divide-y divide-[#F1E6E0]">
+              {state.specialties.map((spec) => {
+                const sum = getClinicOccupancySummary({
+                  professionals: state.professionals,
+                  appointments: state.appointments,
+                  availabilities: state.availabilities,
+                  date: simulatedDate,
+                  currentMinutes: simulatedMinutes,
+                  specialtyId: spec.id,
+                });
+                if (sum.totalActive === 0) return null;
+                return (
+                  <li key={spec.id} className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-3 text-sm">
+                    <span className="font-medium text-[#2E2A2B]">{spec.name}</span>
+                    <span className="text-xs text-[#6E6567] tabular-nums">
+                      {formatSpecialtyOccupancySummary(sum.busyCount, sum.idleCount)}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
+
         return (
           <>
             {/* Gerente: Faturamento (dia e mês) + Top 5 serviços do mês primeiro; Atendente: indicadores da recepção primeiro */}
@@ -560,9 +761,9 @@ export const DashboardPage: React.FC = () => {
               receptionKpisSection
             )}
 
-            {/* Main Content Grid: Charts + Action Side Panels */}
+            {/* Main Content Grid */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-              {/* Left/Center Charts (8 cols) */}
+              {isManager ? (
               <div className="xl:col-span-8 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Bar chart: Atendimentos por horário hoje */}
@@ -774,157 +975,17 @@ export const DashboardPage: React.FC = () => {
                 </div>
               </div>
 
-        {/* Right Side Panels: Next 5 Appointments & Waitlist (4 cols) */}
+              ) : (
+                <div className="xl:col-span-8 space-y-6">
+                  {nextAppointmentsSection}
+                </div>
+              )}
+
+        {/* Painéis laterais */}
         <div className="xl:col-span-4 space-y-6">
-          {/* Próximos 5 atendimentos */}
-          <section className="rf-card p-5" aria-label="Próximos atendimentos">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="font-display text-lg font-semibold text-[#2E2A2B]">
-                  Próximos atendimentos
-                </h2>
-                <p className="text-xs text-[#6E6567]">
-                  Próximas 5 clientes agendadas hoje
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate('/agenda')}
-                className="text-xs font-medium text-[#B76E79] hover:underline flex items-center gap-1"
-              >
-                <span>Ver agenda</span>
-                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-              </button>
-            </div>
-
-            {nextFiveAppointments.length === 0 ? (
-              <p className="text-sm text-[#6E6567] py-6 text-center">
-                Nenhum próximo agendamento pendente hoje.
-              </p>
-            ) : (
-              <ul className="divide-y divide-[#F1E6E0]">
-                {nextFiveAppointments.map((appt) => {
-                  const prof = state.professionals.find(
-                    (p) => p.id === appt.professionalId
-                  );
-                  const hairDetail =
-                    appt.hairFormat && appt.hairLength
-                      ? ` · ${HAIR_FORMAT_LABELS[appt.hairFormat]} ${HAIR_LENGTH_LABELS[appt.hairLength]}`
-                      : '';
-                  const isOverdue = isLateArrival(appt, simulatedMinutes);
-                  return (
-                    <li
-                      key={appt.id}
-                      className="py-3.5 first:pt-0 last:pb-0 flex flex-col gap-2"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="text-xs font-bold text-[#9A5560] tabular-nums">
-                            {appt.startTime}
-                          </span>
-                          <OriginBadge origin={appt.origin} />
-                          {isOverdue && (
-                            <AppointmentStatusLabel
-                              status={appt.status}
-                              isLate={true}
-                            />
-                          )}
-                        </div>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-[#2E2A2B] truncate">
-                          {appt.clientName}
-                        </p>
-                        <p className="text-xs text-[#6E6567] truncate">
-                          {appt.serviceName}
-                          {hairDetail} · {prof?.name}
-                        </p>
-                      </div>
-                      <div className="flex justify-end">
-                        {isOverdue ? (
-                          <button
-                            type="button"
-                            onClick={() => handleCheckInClick(appt)}
-                            className="px-3 py-1.5 rounded-full text-xs font-medium bg-[#FFF4E5] text-[#8C5214] border border-[#F0D0A8] hover:bg-[#FDE6C4] transition-colors inline-flex items-center gap-1.5"
-                          >
-                            <Hourglass className="w-3 h-3 shrink-0" aria-hidden="true" />
-                            <span>Chegou atrasada – enviar à fila</span>
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleCheckInClick(appt)}
-                            className="rf-btn-primary px-3 py-1.5 text-xs font-medium"
-                          >
-                            Cliente chegou
-                          </button>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-
-          {/* Fila de Espera */}
-          <section className="rf-card p-5" aria-label="Fila de espera">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="font-display text-lg font-semibold text-[#2E2A2B]">
-                  Fila de espera
-                </h2>
-                <p className="text-xs text-[#6E6567]">
-                  Por ordem de chegada ({waitingQueue.length})
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate('/fila')}
-                className="text-xs font-medium text-[#B76E79] hover:underline flex items-center gap-1"
-              >
-                <span>Gerenciar</span>
-                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-              </button>
-            </div>
-
-            {waitingQueue.length === 0 ? (
-              <p className="text-sm text-[#6E6567] py-6 text-center">
-                Fila de espera vazia no momento.
-              </p>
-            ) : (
-              <ul className="divide-y divide-[#F1E6E0]">
-                {waitingQueue.map((entry, idx) => (
-                  <li key={entry.id} className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-xs text-[#6E6567] tabular-nums">
-                        #{idx + 1} · Entrada {entry.enteredAt} ·{' '}
-                        {entry.type === 'atrasada_paga'
-                          ? 'Atrasada – já pagou'
-                          : 'Sem reserva'}
-                      </p>
-                      <p className="text-sm font-semibold text-[#2E2A2B] truncate mt-0.5">
-                        {entry.clientName}
-                      </p>
-                      <p className="text-xs text-[#6E6567] truncate">
-                        {entry.serviceName} ({entry.durationMinutes} min)
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFitModalEntry(entry);
-                        setSelectedFitSlot(null);
-                      }}
-                      className="rf-btn-secondary px-3.5 py-1.5 text-xs font-semibold shrink-0 whitespace-nowrap"
-                    >
-                      Encaixar
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          {isManager && nextAppointmentsSection}
+          {waitlistSection}
+          {!isManager && teamNowSection}
         </div>
       </div>
           </>

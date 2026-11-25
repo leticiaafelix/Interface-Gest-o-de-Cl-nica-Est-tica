@@ -9,6 +9,7 @@ import {
   Gift,
   Hourglass,
   LayoutDashboard,
+  ConciergeBell,
   LogOut,
   Menu,
   RotateCcw,
@@ -24,6 +25,7 @@ import { BrandMark } from './BrandMark';
 import { Modal } from './Modal';
 import { ToastContainer } from './ToastContainer';
 import { formatDateBR, onlyDigits } from '../utils/formatters';
+import { BrazilianTimeInput } from './DateTimeInputs';
 
 interface NavItem {
   to: string;
@@ -37,7 +39,13 @@ const NAV_ITEMS: NavItem[] = [
     to: '/dashboard',
     label: 'Dashboard',
     Icon: LayoutDashboard,
-    roles: ['atendente', 'gerente'],
+    roles: ['gerente'],
+  },
+  {
+    to: '/dashboard',
+    label: 'Recepção',
+    Icon: ConciergeBell,
+    roles: ['atendente'],
   },
   {
     to: '/agenda',
@@ -290,14 +298,12 @@ export const Layout: React.FC = () => {
                     >
                       -15m
                     </button>
-                    <input
-                      type="time"
+                    <BrazilianTimeInput
                       aria-label="Hora simulada atual"
                       value={simulatedTime}
-                      onChange={(e) => {
-                        if (e.target.value) setSimulatedTime(e.target.value);
-                      }}
-                      className="text-xs font-semibold text-[#2E2A2B] bg-transparent border-none p-0 w-[64px] tabular-nums focus:outline-none"
+                      compact
+                      onChange={(hhmm) => setSimulatedTime(hhmm)}
+                      className="text-xs font-semibold text-[#2E2A2B] bg-transparent border-none p-0 tabular-nums focus:outline-none"
                     />
                     <button
                       type="button"

@@ -5,6 +5,7 @@ import { Appointment, DayAvailability } from '../types/clinic';
 import { addDaysIso, formatDateBR } from '../utils/formatters';
 import { validateDayAvailability } from '../utils/scheduling';
 import { Modal } from '../components/Modal';
+import { BrazilianDateInput, BrazilianTimeInput } from '../components/DateTimeInputs';
 
 export const AvailabilityPage: React.FC = () => {
   const { state, simulatedDate, saveDayAvailability, pushToast } = useClinic();
@@ -112,11 +113,11 @@ export const AvailabilityPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <input
-            type="date"
+          <BrazilianDateInput
             aria-label="Selecionar data da disponibilidade"
             value={selectedDate}
-            onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+            alignRight
+            onChange={(iso) => setSelectedDate(iso)}
             className="px-3.5 py-2 rounded-full border border-[#D9C3B9] bg-white text-sm tabular-nums"
           />
           <button
@@ -261,12 +262,12 @@ export const AvailabilityPage: React.FC = () => {
                             >
                               Início do expediente
                             </label>
-                            <input
+                            <BrazilianTimeInput
                               id={`start-${prof.id}`}
-                              type="time"
                               value={entry.startTime}
-                              onChange={(e) =>
-                                updateEntry(prof.id, { startTime: e.target.value })
+                              fullWidth
+                              onChange={(hhmm) =>
+                                updateEntry(prof.id, { startTime: hhmm })
                               }
                               className="w-full px-3 py-1.5 rounded-xl border border-[#D9C3B9] text-sm bg-white tabular-nums"
                             />
@@ -278,12 +279,12 @@ export const AvailabilityPage: React.FC = () => {
                             >
                               Fim do expediente
                             </label>
-                            <input
+                            <BrazilianTimeInput
                               id={`end-${prof.id}`}
-                              type="time"
                               value={entry.endTime}
-                              onChange={(e) =>
-                                updateEntry(prof.id, { endTime: e.target.value })
+                              fullWidth
+                              onChange={(hhmm) =>
+                                updateEntry(prof.id, { endTime: hhmm })
                               }
                               className="w-full px-3 py-1.5 rounded-xl border border-[#D9C3B9] text-sm bg-white tabular-nums"
                             />

@@ -38,6 +38,7 @@ import { PaymentModal } from '../components/PaymentModal';
 import { Modal } from '../components/Modal';
 import { EmptyState } from '../components/SkeletonBlock';
 import { useNavigate } from 'react-router-dom';
+import { BrazilianDateInput, BrazilianTimeInput } from '../components/DateTimeInputs';
 
 export const AgendaPage: React.FC = () => {
   const {
@@ -227,11 +228,11 @@ export const AgendaPage: React.FC = () => {
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <input
-            type="date"
+          <BrazilianDateInput
             aria-label="Selecionar data da agenda"
             value={selectedDate}
-            onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+            alignRight
+            onChange={(iso) => setSelectedDate(iso)}
             className="text-sm font-medium text-[#2E2A2B] bg-transparent border-none px-2 tabular-nums"
           />
           <button
@@ -754,13 +755,13 @@ export const AgendaPage: React.FC = () => {
                     >
                       Nova data
                     </label>
-                    <input
+                    <BrazilianDateInput
                       id="resched-date"
-                      type="date"
                       min={simulatedDate}
                       value={rescheduleDate}
-                      onChange={(e) => {
-                        setRescheduleDate(e.target.value);
+                      fullWidth
+                      onChange={(iso) => {
+                        setRescheduleDate(iso);
                         setRescheduleTime('');
                       }}
                       className="w-full px-3 py-2 rounded-xl border border-[#D9C3B9] text-sm bg-white"

@@ -32,6 +32,7 @@ import {
   getServicePriceAndDuration,
 } from '../utils/scheduling';
 import { SafeImage } from '../components/SafeImage';
+import { BrazilianDateInput, BrazilianTimeInput } from '../components/DateTimeInputs';
 
 export const CounterBookingPage: React.FC = () => {
   const {
@@ -495,16 +496,14 @@ export const CounterBookingPage: React.FC = () => {
               >
                 Data do atendimento
               </label>
-              <input
+              <BrazilianDateInput
                 id="balcao-date"
-                type="date"
                 min={simulatedDate}
                 value={selectedDate}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setSelectedDate(e.target.value);
-                    setSelectedTime('');
-                  }
+                fullWidth
+                onChange={(iso) => {
+                  setSelectedDate(iso);
+                  setSelectedTime('');
                 }}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-[#D9C3B9] text-sm bg-white tabular-nums"
               />

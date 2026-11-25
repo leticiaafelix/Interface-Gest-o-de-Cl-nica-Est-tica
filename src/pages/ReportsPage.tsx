@@ -12,6 +12,7 @@ import { BarChart3, CheckCircle2, DollarSign, Percent, UserX } from 'lucide-reac
 import { useClinic } from '../context/ClinicContext';
 import { addDaysIso, formatCurrencyBRL, formatDateBR } from '../utils/formatters';
 import { EmptyState } from '../components/SkeletonBlock';
+import { BrazilianDateInput, BrazilianTimeInput } from '../components/DateTimeInputs';
 
 export const ReportsPage: React.FC = () => {
   const { state, simulatedDate } = useClinic();
@@ -75,7 +76,9 @@ export const ReportsPage: React.FC = () => {
           categoryName: cat?.name ?? '',
         };
       }
-      byService[a.serviceId].count += 1;
+      // Quantidade = só atendimentos concluídos (bate com o cartão "Atendimentos concluídos").
+      // Faturamento = mesma regra do cartão "Total arrecadado" (a soma das linhas bate com ele).
+      if (a.status === 'concluido') byService[a.serviceId].count += 1;
       if (a.paymentStatus === 'pago') {
         byService[a.serviceId].revenue += a.price;
       } else if (
@@ -137,11 +140,10 @@ export const ReportsPage: React.FC = () => {
           <label htmlFor="rep-start" className="text-xs font-medium text-[#6E6567]">
             De:
           </label>
-          <input
+          <BrazilianDateInput
             id="rep-start"
-            type="date"
             value={startDate}
-            onChange={(e) => e.target.value && setStartDate(e.target.value)}
+            onChange={(iso) => setStartDate(iso)}
             className="px-3 py-1.5 rounded-full border border-[#D9C3B9] text-sm bg-[#FFFAF7] tabular-nums"
           />
         </div>
@@ -150,11 +152,10 @@ export const ReportsPage: React.FC = () => {
           <label htmlFor="rep-end" className="text-xs font-medium text-[#6E6567]">
             Até:
           </label>
-          <input
+          <BrazilianDateInput
             id="rep-end"
-            type="date"
             value={endDate}
-            onChange={(e) => e.target.value && setEndDate(e.target.value)}
+            onChange={(iso) => setEndDate(iso)}
             className="px-3 py-1.5 rounded-full border border-[#D9C3B9] text-sm bg-[#FFFAF7] tabular-nums"
           />
         </div>
@@ -243,7 +244,7 @@ export const ReportsPage: React.FC = () => {
                   Serviços mais procurados
                 </h2>
                 <p className="text-xs text-[#6E6567]">
-                  Quantidade de atendimentos no período selecionado
+                  Atendimentos concluídos no período selecionado
                 </p>
               </div>
               <div className="h-72">
@@ -273,7 +274,7 @@ export const ReportsPage: React.FC = () => {
                   Ranking detalhado de serviços
                 </h2>
                 <p className="text-xs text-[#6E6567]">
-                  Quantidade e faturamento acumulado por serviço
+                  Qtd. = atendimentos concluídos · Faturamento = valores recebidos (inclui reservas já pagas e retenções de faltas)
                 </p>
               </div>
               <div className="overflow-x-auto">

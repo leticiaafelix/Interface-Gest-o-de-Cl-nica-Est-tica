@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ClinicProvider, useClinic } from './context/ClinicContext';
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
@@ -50,7 +50,7 @@ const RootRedirect: React.FC = () => {
 export default function App() {
   return (
     <ClinicProvider>
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route
@@ -167,7 +167,7 @@ export default function App() {
           </Route>
           <Route path="*" element={<RootRedirect />} />
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </ClinicProvider>
   );
 }
