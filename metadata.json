@@ -1,0 +1,6 @@
+{
+  "name": "Rebecca Felix — Painel Administrativo",
+  "description": "Painel administrativo interno da clínica de beleza Rebecca Felix (Salão de Beleza e Centro de Estética).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
